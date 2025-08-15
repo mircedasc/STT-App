@@ -1,9 +1,11 @@
-import whisper
-import re
 import threading
 import itertools
 import sys
 import time
+import re
+import tkinter as tk
+from tkinter import filedialog
+import whisper
 
 def loading_animation(stop_event):
     for frame in itertools.cycle(["|", "/", "-", "\\"]):
@@ -13,14 +15,23 @@ def loading_animation(stop_event):
         sys.stdout.flush()
         time.sleep(0.1)
 
+root = tk.Tk()
+root.withdraw()
+
+audio_path = filedialog.askopenfilename(
+    title="Select an audio file",
+    filetypes=[("Audio files", "*.mp3 *.wav *.m4a *.flac"), ("All files", "*.*")]
+)
+
+if not audio_path:
+    print("No file selected. Exiting.")
+    sys.exit()
+
 stop_event = threading.Event()
 thread = threading.Thread(target=loading_animation, args=(stop_event,))
 thread.start()
 
 model = whisper.load_model("medium")
-
-audio_path = "8 Curiozitaţi Geografice.mp3"
-
 result = model.transcribe(audio_path, language="ro")
 
 stop_event.set()
