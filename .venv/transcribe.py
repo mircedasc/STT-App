@@ -32,12 +32,11 @@ class TranscriberApp:
         if not file_path:
             return
 
-        self.status_label.config(text="Transcribing... please wait ⏳")
+        self.status_label.config(text="Transcribing...  please wait ⏳")
         self.upload_btn.config(state="disabled")
         self.save_btn.config(state="disabled")
         self.text = ""
 
-        # Run transcription in background thread
         thread = threading.Thread(target=self.transcribe, args=(file_path,))
         thread.start()
 
@@ -47,7 +46,6 @@ class TranscriberApp:
             result = model.transcribe(file_path, language="ro")
             text = result["text"]
 
-            # Split sentences nicely
             sentences = re.split(r'(?<=[.?!])\s+', text.strip())
             self.text = "\n".join(s.strip() for s in sentences)
 
