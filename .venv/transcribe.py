@@ -1,49 +1,83 @@
 import threading
-import itertools
-import sys
-import time
 import re
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 import whisper
 
-def loading_animation(stop_event):
-    for frame in itertools.cycle(["|", "/", "-", "\\"]):
-        if stop_event.is_set():
-            break
-        sys.stdout.write(f"\rTranscribing... {frame}")
-        sys.stdout.flush()
-        time.sleep(0.1)
+class TranscriberApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Whisper Transcriber")
+        self.root.geometry("420x220")
 
-root = tk.Tk()
-root.withdraw()
+        self.label = tk.Label(root, text="Upload an audio file to transcribe", font=("Arial", 12))
+        self.label.pack(pady=20)
 
-audio_path = filedialog.askopenfilename(
-    title="Select an audio file",
-    filetypes=[("Audio files", "*.mp3 *.wav *.m4a *.flac"), ("All files", "*.*")]
-)
+        self.upload_btn = tk.Button(root, text="Upload Audio File", command=self.upload_file, width=20, height=2)
+        self.upload_btn.pack()
 
-if not audio_path:
-    print("No file selected. Exiting.")
-    sys.exit()
+        self.status_label = tk.Label(root, text="", fg="blue", font=("Arial", 10))
+        self.status_label.pack(pady=10)
 
-stop_event = threading.Event()
-thread = threading.Thread(target=loading_animation, args=(stop_event,))
-thread.start()
+        self.save_btn = tk.Button(root, text="Save Transcription", command=self.save_transcription, state="disabled", width=20, height=2)
+        self.save_btn.pack()
 
-model = whisper.load_model("medium")
-result = model.transcribe(audio_path, language="ro")
+        self.text = ""
 
-stop_event.set()
-thread.join()
-print("\rTranscription complete!       ")
+    def upload_file(self):
+        file_path = filedialog.askopenfilename(
+            title="Select an audio file",
+            filetypes=[("Audio files", "*.mp3 *.wav *.m4a *.flac"), ("All files", "*.*")]
+        )
+        if not file_path:
+            return
 
-text = result["text"]
+        self.status_label.config(text="Transcribing... please wait ⏳")
+        self.upload_btn.config(state="disabled")
+        self.save_btn.config(state="disabled")
+        self.text = ""
 
-sentences = re.split(r'(?<=[.?!])\s+', text.strip())
+        # Run transcription in background thread
+        thread = threading.Thread(target=self.transcribe, args=(file_path,))
+        thread.start()
 
-with open("transcription.txt", "w", encoding="utf-8") as f:
-    for sentence in sentences:
-        f.write(sentence.strip() + "\n")
+    def transcribe(self, file_path):
+        try:
+            model = whisper.load_model("medium")
+            result = model.transcribe(file_path, language="ro")
+            text = result["text"]
 
-print("Transcription saved to transcription.txt")
+            # Split sentences nicely
+            sentences = re.split(r'(?<=[.?!])\s+', text.strip())
+            self.text = "\n".join(s.strip() for s in sentences)
+
+            # Update UI back on main thread
+            self.root.after(0, self.transcription_complete)
+
+        except Exception as e:
+            self.root.after(0, lambda: self.status_label.config(text=f"Error: {e}"))
+
+    def transcription_complete(self):
+        self.status_label.config(text="✅ Transcription complete!", fg="green")
+        self.save_btn.config(state="normal")
+        self.upload_btn.config(state="normal")
+
+    def save_transcription(self):
+        if not self.text:
+            messagebox.showerror("Error", "No transcription available to save.")
+            return
+
+        save_path = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt")],
+            title="Save transcription as"
+        )
+        if save_path:
+            with open(save_path, "w", encoding="utf-8") as f:
+                f.write(self.text)
+            messagebox.showinfo("Saved", f"Transcription saved to:\n{save_path}")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TranscriberApp(root)
+    root.mainloop()
