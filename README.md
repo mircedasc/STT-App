@@ -31,3 +31,9 @@ When it’s done, status will turn ✅ Transcription complete!.
 Click Save Transcription to choose where to store your .txt file.
 
 You can then upload another file and repeat the process.
+
+---
+
+💾 Download the Release
+
+You can download the latest compiled .exe version of Whisper Transcriber from https://github.com/mircedasc/STT-App/releases/tag/release
