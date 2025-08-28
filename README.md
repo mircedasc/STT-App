@@ -38,6 +38,8 @@ You can then upload another file and repeat the process.
 
 You can download the latest compiled `.exe` version of Whisper Transcriber from https://github.com/mircedasc/STT-App/releases/tag/release
 
+Reminder: Whisper needs FFmpeg for audio file handling. Scroll down to see how to download
+
 ⚠️ If the `.exe` doesn’t work on your system, follow the manual setup steps below.  
 
 ---
