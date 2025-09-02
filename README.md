@@ -88,6 +88,9 @@ Whisper needs FFmpeg for audio file handling:
 If it's missing:
 
 Windows: powershell
+
+
+you have to install [chocolatey](https://chocolatey.org/install) first
 ```
 choco install ffmpeg -y
 ```
